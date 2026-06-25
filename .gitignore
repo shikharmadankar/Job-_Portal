@@ -1,0 +1,13 @@
+# Environment variables
+Backend/.env
+
+# Node modules
+Backend/node_modules
+Frontend/node_modules
+
+# AWS key files
+*.pem
+
+# Build folders
+dist
+build
