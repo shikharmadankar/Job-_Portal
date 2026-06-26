@@ -3,6 +3,8 @@ import { Home, BookOpen, Calendar, User, LogOut, Search, Bell, MapPin, Briefcase
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -39,13 +41,13 @@ const Dashboard = () => {
       const fetchJobsAndApplications = async () => {
         setLoadingJobs(true);
         try {
-          const resJobs = await axios.get("http://localhost:8000/api/job/get", {
+          const resJobs = await axios.get(`${API_URL}/job/get`, {
             withCredentials: true
           });
           if (resJobs.data.status) {
             setJobs(resJobs.data.jobs);
           }
-          const resApps = await axios.get("http://localhost:8000/api/application/get", {
+          const resApps = await axios.get(`${API_URL}/application/get`, {
             withCredentials: true
           });
           if (resApps.data.success) {
@@ -68,7 +70,7 @@ const Dashboard = () => {
       const fetchMyApps = async () => {
         setLoadingApplications(true);
         try {
-          const res = await axios.get("http://localhost:8000/api/application/get", {
+          const res = await axios.get(`${API_URL}/application/get`, {
             withCredentials: true
           });
           if (res.data.success) {
@@ -90,7 +92,7 @@ const Dashboard = () => {
       const fetchMeetings = async () => {
         setLoadingMeetings(true);
         try {
-          const res = await axios.get("http://localhost:8000/api/meeting/student", {
+          const res = await axios.get(`${API_URL}/meeting/student`, {
             withCredentials: true
           });
           if (res.data.success) {
@@ -108,7 +110,7 @@ const Dashboard = () => {
 
   const handleApply = async (jobId) => {
     try {
-      const res = await axios.get(`http://localhost:8000/api/application/apply/${jobId}`, {
+      const res = await axios.get(`${API_URL}/application/apply/${jobId}`, {
         withCredentials: true,
       });
       if (res.data.success) {

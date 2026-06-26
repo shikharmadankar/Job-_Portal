@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL;
 import {
   ArrowLeft,
   Mail,
@@ -93,7 +95,7 @@ const Profile = () => {
       payload.append("uploadType", "photo");
 
       const res = await axios.post(
-        "http://localhost:8000/api/user/profile/update",
+        `${API_URL}/user/profile/update`,
         payload,
         {
           withCredentials: true,
@@ -130,7 +132,7 @@ const Profile = () => {
       }
 
       const res = await axios.post(
-        "http://localhost:8000/api/user/profile/update",
+        `${API_URL}/user/profile/update`,
         resumeFile ? payload : formData,
         {
           withCredentials: true,

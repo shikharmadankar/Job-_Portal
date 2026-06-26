@@ -13,6 +13,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Sidebar = ({ activeTab, setActiveTab }) => {
   const navigate = useNavigate();
   const handleLogout = () => {
@@ -130,12 +132,12 @@ const RecruiterDashboard = () => {
   const fetchApplicantsData = async () => {
     setLoadingApplicants(true);
     try {
-      const resJobs = await axios.get("http://localhost:8000/api/job/getadminjobs", { withCredentials: true });
+      const resJobs = await axios.get(`${API_URL}/job/getadminjobs`, { withCredentials: true });
       if ((resJobs.data.status || resJobs.data.success) && resJobs.data.jobs) {
          const adminJobs = resJobs.data.jobs;
          let allApps = [];
          for (let job of adminJobs) {
-             const resApps = await axios.get(`http://localhost:8000/api/application/${job._id}/applicants`, { withCredentials: true });
+             const resApps = await axios.get(`${API_URL}/application/${job._id}/applicants`, { withCredentials: true });
              if ((resApps.data.status || resApps.data.success) && resApps.data.job?.applications) {
                  const appsWithJobInfo = resApps.data.job.applications.map(app => ({
                      ...app,
@@ -158,7 +160,7 @@ const RecruiterDashboard = () => {
   const fetchMeetings = async () => {
     setLoadingMeetings(true);
     try {
-      const res = await axios.get("http://localhost:8000/api/meeting/recruiter", { withCredentials: true });
+      const res = await axios.get(`${API_URL}/meeting/recruiter`, { withCredentials: true });
       if (res.data.success) {
         setMeetings(res.data.meetings);
       }
@@ -180,7 +182,7 @@ const RecruiterDashboard = () => {
         description: meetingForm.description,
         scheduledDate: meetingForm.scheduledDate,
       };
-      const res = await axios.post("http://localhost:8000/api/meeting/schedule", payload, { withCredentials: true });
+      const res = await axios.post(`${API_URL}/meeting/schedule`, payload, { withCredentials: true });
       if (res.data.success) {
         alert("Meeting scheduled successfully!");
         setSchedulingFor(null);
@@ -195,7 +197,7 @@ const RecruiterDashboard = () => {
   const fetchCompanies = async () => {
       setLoadingCompanies(true);
       try {
-          const res = await axios.get("http://localhost:8000/api/company/get", {
+          const res = await axios.get(`${API_URL}/company/get`, {
               withCredentials: true
           });
           if (res.data.success) {
@@ -214,7 +216,7 @@ const RecruiterDashboard = () => {
   const handleRegisterCompany = async (e) => {
       e.preventDefault();
       try {
-          const res = await axios.post("http://localhost:8000/api/company/register", companyForm, {
+          const res = await axios.post(`${API_URL}/company/register`, companyForm, {
               withCredentials: true
           });
           if (res.data.success) {
@@ -231,7 +233,7 @@ const RecruiterDashboard = () => {
   const handlePostJob = async (e) => {
       e.preventDefault();
       try {
-          const res = await axios.post("http://localhost:8000/api/job/post", jobForm, {
+          const res = await axios.post(`${API_URL}/job/post`, jobForm, {
               withCredentials: true
           });
           if (res.data.status) {

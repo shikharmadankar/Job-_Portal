@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 /**
  * SessionManager — invisible component that:
  * 1. Refreshes the JWT token every 4 hours of activity
@@ -48,7 +50,7 @@ const SessionManager = () => {
       if (timeSinceRefresh >= REFRESH_INTERVAL && wasActiveRecently) {
         try {
           const res = await axios.get(
-            "http://localhost:8000/api/user/refresh-token",
+            `${API_URL}/user/refresh-token`,
             {
               withCredentials: true,
               headers: {

@@ -3,6 +3,8 @@ import { Search, MapPin, Briefcase, Building, ChevronRight, Star, Filter } from 
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 // Utility for time ago
 const timeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -36,7 +38,7 @@ const Jobb = () => {
     setLoading(true);
     try {
       // Create query string
-      const url = new URL("http://localhost:8000/api/job/get");
+      const url = new URL(`${API_URL}/job/get`);
       if (searchParams.keyword) url.searchParams.append("keyword", searchParams.keyword);
       // Backend currently doesn't support location filter heavily but we'll prepare the state
 
