@@ -18,22 +18,23 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  origin: ["http://51.20.126.134", "http://localhost:5173"],
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 };
 
 app.use(cors(corsOptions));
-
 const PORT = process.env.PORT || 8000;
 
  
 //api's
 
-app.use("/api/user", userRoute);
-app.use("/api/company", companyRoute);
-app.use("/api/job", jobRoute);
-app.use("/api/application", applicationRoute);
-app.use("/api/meeting", meetingRoute);
+app.use("/api/v1/user", userRoute);
+app.use("/api/v1/company", companyRoute);
+app.use("/api/v1/job", jobRoute);
+app.use("/api/v1/application", applicationRoute);
+app.use("/api/v1/meeting", meetingRoute);
 
 app.listen(PORT, () => {
   connectDB();
