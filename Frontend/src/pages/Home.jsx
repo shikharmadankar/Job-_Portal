@@ -71,7 +71,7 @@ const Home = () => {
             Over 10,000+ jobs available
           </div>
 
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-[#0f172a] tracking-tight leading-[1.1] mb-6">
+          <h1 className="text-4xl md:text-5xl lg:text-7xl font-extrabold text-[#0f172a] tracking-tight leading-[1.1] mb-6">
             Discover Your Next <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
               Career Move

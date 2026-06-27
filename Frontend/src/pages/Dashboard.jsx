@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Home, BookOpen, Calendar, User, LogOut, Search, Bell, MapPin, Briefcase, Star, Clock, CheckCircle, XCircle, ChevronRight, Video, TrendingUp, FileText } from "lucide-react";
+import { Home, BookOpen, Calendar, User, LogOut, Search, Bell, MapPin, Briefcase, Star, Clock, CheckCircle, XCircle, ChevronRight, Video, TrendingUp, FileText, Menu, X, Settings } from "lucide-react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import axios from "axios";
 
@@ -10,6 +10,7 @@ const Dashboard = () => {
   const location = useLocation();
   const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState("Dashboard");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
@@ -27,84 +28,135 @@ const Dashboard = () => {
   const [jobs, setJobs] = useState([]);
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [appliedJobs, setAppliedJobs] = useState(new Set());
+  const [jobsError, setJobsError] = useState(null);
 
   // Applications state for Dashboard tab
   const [myApplications, setMyApplications] = useState([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
+  const [applicationsError, setApplicationsError] = useState(null);
 
   // Meetings state for Schedule tab
   const [meetings, setMeetings] = useState([]);
   const [loadingMeetings, setLoadingMeetings] = useState(false);
+  const [meetingsError, setMeetingsError] = useState(null);
 
   useEffect(() => {
     if (activeTab === "Jobs") {
+      let isMounted = true;
       const fetchJobsAndApplications = async () => {
         setLoadingJobs(true);
+        setJobsError(null);
         try {
           const resJobs = await axios.get(`${API_URL}/job/get`, {
             withCredentials: true
           });
+          if (!isMounted) return;
           if (resJobs.data.status) {
             setJobs(resJobs.data.jobs);
           }
-          const resApps = await axios.get(`${API_URL}/application/get`, {
-            withCredentials: true
-          });
-          if (resApps.data.success) {
-            const appliedSet = new Set(resApps.data.application.map(app => app.job._id));
-            setAppliedJobs(appliedSet);
+          
+          try {
+            const resApps = await axios.get(`${API_URL}/application/get`, {
+              withCredentials: true
+            });
+            if (!isMounted) return;
+            if (resApps.data.success) {
+              const appliedSet = new Set(resApps.data.application.map(app => app.job._id));
+              setAppliedJobs(appliedSet);
+            }
+          } catch (appErr) {
+            console.error(`Error fetching applications from ${API_URL}/application/get:`, appErr.response ? {
+              status: appErr.response.status,
+              data: appErr.response.data
+            } : appErr.message);
           }
         } catch (error) {
-          console.error("Failed to fetch jobs or applications", error);
+          if (!isMounted) return;
+          console.error(`Error fetching jobs from ${API_URL}/job/get:`, error.response ? {
+            status: error.response.status,
+            data: error.response.data
+          } : error.message);
+          setJobsError(error.response?.data?.message || error.message || "Failed to load jobs");
         } finally {
-          setLoadingJobs(false);
+          if (isMounted) {
+            setLoadingJobs(false);
+          }
         }
       };
       fetchJobsAndApplications();
+      return () => {
+        isMounted = false;
+      };
     }
   }, [activeTab]);
 
   // Fetch applications for dashboard
   useEffect(() => {
     if (activeTab === "Dashboard") {
+      let isMounted = true;
       const fetchMyApps = async () => {
         setLoadingApplications(true);
+        setApplicationsError(null);
         try {
           const res = await axios.get(`${API_URL}/application/get`, {
             withCredentials: true
           });
+          if (!isMounted) return;
           if (res.data.success) {
             setMyApplications(res.data.application);
           }
         } catch (error) {
-          console.error("Failed to fetch applications", error);
+          if (!isMounted) return;
+          console.error(`Error fetching applications from ${API_URL}/application/get:`, error.response ? {
+            status: error.response.status,
+            data: error.response.data
+          } : error.message);
+          setApplicationsError(error.response?.data?.message || error.message || "Failed to load applications");
         } finally {
-          setLoadingApplications(false);
+          if (isMounted) {
+            setLoadingApplications(false);
+          }
         }
       };
       fetchMyApps();
+      return () => {
+        isMounted = false;
+      };
     }
   }, [activeTab]);
 
   // Fetch meetings for schedule tab
   useEffect(() => {
     if (activeTab === "Schedule") {
+      let isMounted = true;
       const fetchMeetings = async () => {
         setLoadingMeetings(true);
+        setMeetingsError(null);
         try {
           const res = await axios.get(`${API_URL}/meeting/student`, {
             withCredentials: true
           });
+          if (!isMounted) return;
           if (res.data.success) {
             setMeetings(res.data.meetings);
           }
         } catch (error) {
-          console.error("Failed to fetch meetings", error);
+          if (!isMounted) return;
+          console.error(`Error fetching meetings from ${API_URL}/meeting/student:`, error.response ? {
+            status: error.response.status,
+            data: error.response.data
+          } : error.message);
+          setMeetingsError(error.response?.data?.message || error.message || "Failed to load schedule");
         } finally {
-          setLoadingMeetings(false);
+          if (isMounted) {
+            setLoadingMeetings(false);
+          }
         }
       };
       fetchMeetings();
+      return () => {
+        isMounted = false;
+      };
     }
   }, [activeTab]);
 
@@ -131,18 +183,20 @@ const Dashboard = () => {
     <div className="animate-fade-in space-y-8">
       {/* Top Header */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-        <div className="relative w-full md:w-[400px] group">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400 group-focus-within:text-purple-500 transition-colors" />
+        <div className="w-full md:w-auto">
+          <div className="relative group w-full md:w-[400px]">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400 group-focus-within:text-purple-500 transition-colors" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search for jobs, skills, or companies..."
+              className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-0 bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium text-gray-700 transition-all text-sm"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Search for jobs, skills, or companies..."
-            className="w-full pl-12 pr-4 py-3.5 rounded-2xl border-0 bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] focus:outline-none focus:ring-2 focus:ring-purple-400 font-medium text-gray-700 transition-all text-sm"
-          />
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="hidden md:flex items-center gap-6">
           <div className="relative p-2 rounded-full hover:bg-white/50 cursor-pointer transition">
              <Bell className="h-6 w-6 text-gray-600 hover:text-purple-600 transition-colors" />
              <span className="absolute top-1 right-2 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-[#f8fafc]"></span>
@@ -158,7 +212,7 @@ const Dashboard = () => {
                 className="w-12 h-12 rounded-full border-2 border-white shadow-md object-cover cursor-pointer hover:border-purple-200 transition"
               />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white cursor-pointer">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-50 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-md border-2 border-white cursor-pointer">
                 {user?.fullname?.charAt(0)?.toUpperCase() || "U"}
               </div>
             )}
@@ -249,6 +303,14 @@ const Dashboard = () => {
                  <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
                  <p className="text-gray-500 font-medium">Fetching your applications...</p>
               </div>
+            ) : applicationsError ? (
+              <div className="p-12 text-center flex flex-col items-center justify-center bg-red-50/50 rounded-2xl border border-red-100">
+                 <p className="text-red-600 font-semibold mb-2">Failed to load applications</p>
+                 <p className="text-gray-500 text-xs mb-4">{applicationsError}</p>
+                 <button onClick={() => setActiveTab("Dashboard")} className="bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-700 transition">
+                    Retry
+                 </button>
+              </div>
             ) : myApplications.length === 0 ? (
               <div className="p-16 text-center flex flex-col items-center">
                  <div className="w-20 h-20 bg-gray-50 rounded-[2rem] flex items-center justify-center mb-5 border border-gray-100 shadow-sm">
@@ -316,6 +378,14 @@ const Dashboard = () => {
       {loadingJobs ? (
         <div className="flex justify-center py-20">
             <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+        </div>
+      ) : jobsError ? (
+        <div className="bg-red-50/50 p-8 rounded-[2rem] border border-red-100 text-center shadow-sm max-w-md mx-auto">
+           <p className="text-red-600 font-bold mb-2">Failed to load jobs</p>
+           <p className="text-gray-500 text-sm mb-4">{jobsError}</p>
+           <button onClick={() => { setActiveTab("Jobs"); }} className="bg-red-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-red-700 transition">
+              Retry
+           </button>
         </div>
       ) : jobs.length === 0 ? (
         <div className="bg-white p-12 rounded-[2rem] border border-gray-100 text-center shadow-sm">
@@ -388,13 +458,21 @@ const Dashboard = () => {
           <div className="flex justify-center items-center h-full py-20">
               <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
           </div>
+        ) : meetingsError ? (
+          <div className="text-center py-20 flex flex-col items-center justify-center bg-red-50/50 rounded-2xl border border-red-100 max-w-md mx-auto">
+             <p className="text-red-600 font-bold mb-2">Failed to load schedule</p>
+             <p className="text-gray-500 text-sm mb-4">{meetingsError}</p>
+             <button onClick={() => { setActiveTab("Schedule"); }} className="bg-red-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-red-700 transition">
+                Retry
+             </button>
+          </div>
         ) : meetings.length === 0 ? (
           <div className="text-center py-20 flex flex-col items-center">
-            <div className="w-24 h-24 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-center mb-6 shadow-inner">
-               <Calendar size={40} className="text-gray-300" />
-            </div>
-            <h3 className="font-extrabold text-xl text-gray-700 mb-2">No Upcoming Interviews</h3>
-            <p className="text-gray-500 font-medium max-w-sm">When a recruiter schedules an interview with you smoothly, it will appear here.</p>
+             <div className="w-24 h-24 bg-gray-50 rounded-[2rem] border border-gray-100 flex items-center justify-center mb-6 shadow-inner">
+                <Calendar size={40} className="text-gray-300" />
+             </div>
+             <h3 className="font-extrabold text-xl text-gray-700 mb-2">No Upcoming Interviews</h3>
+             <p className="text-gray-500 font-medium max-w-sm">When a recruiter schedules an interview with you smoothly, it will appear here.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -465,52 +543,114 @@ const Dashboard = () => {
 
   return (
     <div className="flex h-screen bg-[#f8fafc] font-sans overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-64 bg-white shadow-[10px_0_30px_-15px_rgba(0,0,0,0.05)] border-r border-gray-100 p-6 flex flex-col h-full z-20 relative">
-        <div className="flex items-center gap-2 mb-10 pl-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
-               <Briefcase size={16} className="text-white" />
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden"
+        />
+      )}
+
+      {/* Sidebar Drawer */}
+      <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-[10px_0_30px_-15px_rgba(0,0,0,0.05)] border-r border-gray-100 p-6 flex flex-col h-full transform transition-transform duration-300 md:relative md:translate-x-0 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex items-center justify-between mb-10 pl-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                 <Briefcase size={16} className="text-white" />
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 tracking-tight">Job<span className="text-purple-600">tale</span></h2>
             </div>
-            <h2 className="text-2xl font-black text-gray-900 tracking-tight">Job<span className="text-purple-600">tale</span></h2>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+            >
+              <X size={18} />
+            </button>
         </div>
 
         <nav className="space-y-1.5 flex-1">
-          <div
-            onClick={() => setActiveTab("Dashboard")}
-            className={`flex items-center gap-3.5 font-bold cursor-pointer px-4 py-3.5 rounded-[1rem] transition-all duration-300 ${activeTab === 'Dashboard' ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100/50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
-          >
-            <Home size={20} className={activeTab === 'Dashboard' ? 'text-purple-600' : ''} /> Dashboard
-          </div>
-
-          <div
-            onClick={() => setActiveTab("Jobs")}
-            className={`flex items-center gap-3.5 font-bold cursor-pointer px-4 py-3.5 rounded-[1rem] transition-all duration-300 ${activeTab === 'Jobs' ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100/50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
-          >
-            <BookOpen size={20} className={activeTab === 'Jobs' ? 'text-purple-600' : ''} /> Jobs
-          </div>
-
-          <div
-            onClick={() => setActiveTab("Schedule")}
-            className={`flex items-center gap-3.5 font-bold cursor-pointer px-4 py-3.5 rounded-[1rem] transition-all duration-300 ${activeTab === 'Schedule' ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100/50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
-          >
-            <Calendar size={20} className={activeTab === 'Schedule' ? 'text-purple-600' : ''} /> Schedule
-          </div>
-
-          <Link to='/profile'>
-            <div className="flex items-center gap-3.5 text-gray-500 font-bold cursor-pointer hover:bg-gray-50 hover:text-gray-900 px-4 py-3.5 rounded-[1rem] transition-all duration-300 mt-2 border border-transparent">
-              <User size={20} /> Profile
+          {/* Desktop Navigation Items */}
+          <div className="hidden md:block space-y-1.5">
+            <div
+              onClick={() => { setActiveTab("Dashboard"); }}
+              className={`flex items-center gap-3.5 font-bold cursor-pointer px-4 py-3.5 rounded-[1rem] transition-all duration-300 ${activeTab === 'Dashboard' ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100/50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+            >
+              <Home size={20} className={activeTab === 'Dashboard' ? 'text-purple-600' : ''} /> Dashboard
             </div>
-          </Link>
 
-          <Link to='/resume-documents'>
-            <div className="flex items-center gap-3.5 text-gray-500 font-bold cursor-pointer hover:bg-gray-50 hover:text-gray-900 px-4 py-3.5 rounded-[1rem] transition-all duration-300 mt-2 border border-transparent">
-              <FileText size={20} /> Resume & Documents
+            <div
+              onClick={() => { setActiveTab("Jobs"); }}
+              className={`flex items-center gap-3.5 font-bold cursor-pointer px-4 py-3.5 rounded-[1rem] transition-all duration-300 ${activeTab === 'Jobs' ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100/50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+            >
+              <BookOpen size={20} className={activeTab === 'Jobs' ? 'text-purple-600' : ''} /> Jobs
             </div>
-          </Link>
+
+            <div
+              onClick={() => { setActiveTab("Schedule"); }}
+              className={`flex items-center gap-3.5 font-bold cursor-pointer px-4 py-3.5 rounded-[1rem] transition-all duration-300 ${activeTab === 'Schedule' ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100/50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+            >
+              <Calendar size={20} className={activeTab === 'Schedule' ? 'text-purple-600' : ''} /> Schedule
+            </div>
+
+            <Link to='/profile'>
+              <div className="flex items-center gap-3.5 text-gray-500 font-bold cursor-pointer hover:bg-gray-50 hover:text-gray-900 px-4 py-3.5 rounded-[1rem] transition-all duration-300 mt-2 border border-transparent">
+                <User size={20} /> Profile
+              </div>
+            </Link>
+
+            <Link to='/resume-documents'>
+              <div className="flex items-center gap-3.5 text-gray-500 font-bold cursor-pointer hover:bg-gray-50 hover:text-gray-900 px-4 py-3.5 rounded-[1rem] transition-all duration-300 mt-2 border border-transparent">
+                <FileText size={20} /> Resume & Documents
+              </div>
+            </Link>
+          </div>
+
+          {/* Mobile-Only Navigation Items */}
+          <div className="block md:hidden space-y-1.5">
+            <div
+              onClick={() => { setActiveTab("Dashboard"); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3.5 font-bold cursor-pointer px-4 py-3.5 rounded-[1rem] transition-all duration-300 ${activeTab === 'Dashboard' ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100/50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+            >
+              <Home size={20} className={activeTab === 'Dashboard' ? 'text-purple-600' : ''} /> Dashboard
+            </div>
+
+            <div
+              onClick={() => { setActiveTab("Jobs"); setIsSidebarOpen(false); }}
+              className={`flex items-center gap-3.5 font-bold cursor-pointer px-4 py-3.5 rounded-[1rem] transition-all duration-300 ${activeTab === 'Jobs' ? 'bg-purple-50 text-purple-700 shadow-sm border border-purple-100/50' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+            >
+              <BookOpen size={20} className={activeTab === 'Jobs' ? 'text-purple-600' : ''} /> Jobs
+            </div>
+
+            <div
+              onClick={() => { setActiveTab("Dashboard"); setIsSidebarOpen(false); }}
+              className="flex items-center gap-3.5 text-gray-500 font-bold cursor-pointer hover:bg-gray-50 hover:text-gray-900 px-4 py-3.5 rounded-[1rem] transition-all duration-300"
+            >
+              <FileText size={20} /> Applications
+            </div>
+
+            <Link to='/resume-documents' onClick={() => setIsSidebarOpen(false)}>
+              <div className="flex items-center gap-3.5 text-gray-500 font-bold cursor-pointer hover:bg-gray-50 hover:text-gray-900 px-4 py-3.5 rounded-[1rem] transition-all duration-300">
+                <FileText size={20} /> Resume
+              </div>
+            </Link>
+
+            <Link to='/profile' onClick={() => setIsSidebarOpen(false)}>
+              <div className="flex items-center gap-3.5 text-gray-500 font-bold cursor-pointer hover:bg-gray-50 hover:text-gray-900 px-4 py-3.5 rounded-[1rem] transition-all duration-300">
+                <User size={20} /> Profile
+              </div>
+            </Link>
+
+            <div
+              onClick={() => { alert("Settings are managed automatically for your account."); setIsSidebarOpen(false); }}
+              className="flex items-center gap-3.5 text-gray-500 font-bold cursor-pointer hover:bg-gray-50 hover:text-gray-900 px-4 py-3.5 rounded-[1rem] transition-all duration-300"
+            >
+              <Settings size={20} /> Settings
+            </div>
+          </div>
         </nav>
 
         <div className="mt-auto px-2">
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-2xl border border-purple-100/50 mb-4 text-center">
+            <div className="hidden md:block bg-gradient-to-br from-indigo-50 to-purple-50 p-4 rounded-2xl border border-purple-100/50 mb-4 text-center">
                 <p className="text-xs font-bold text-gray-800 mb-1">Upgrade to Premium</p>
                 <p className="text-[10px] font-medium text-gray-500 mb-3">Get 3x more interview calls.</p>
                 <button className="bg-white text-purple-700 px-4 py-1.5 rounded-lg text-xs font-bold w-full shadow-sm hover:shadow-md transition">Go Pro</button>
@@ -528,7 +668,36 @@ const Dashboard = () => {
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto relative pb-10">
         <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-gradient-to-b from-purple-50/50 to-transparent rounded-bl-full pointer-events-none" />
-        <div className="max-w-6xl mx-auto p-6 md:p-10 relative z-10 w-full">
+        {/* Mobile Header bar (only shown on mobile screens where sidebar is hidden) */}
+        <div className="md:hidden flex items-center justify-between bg-white border-b border-gray-100 p-4 shadow-sm relative z-20">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 rounded-xl hover:bg-gray-100 text-gray-600"
+            >
+              <Menu size={20} />
+            </button>
+            <span className="text-lg font-black text-gray-900 tracking-tight">Job<span className="text-purple-600">tale</span></span>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="relative p-2 rounded-full hover:bg-gray-100 cursor-pointer transition">
+               <Bell className="h-6 w-6 text-gray-600 hover:text-purple-600 transition-colors" />
+               <span className="absolute top-1.5 right-2 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+            </div>
+            {user?.profile?.profilePhoto ? (
+              <img
+                src={user.profile.profilePhoto}
+                alt="profile"
+                className="w-9 h-9 rounded-full object-cover border border-gray-200"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                {user?.fullname?.charAt(0)?.toUpperCase()}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto p-4 md:p-10 relative z-10 w-full">
           {activeTab === "Dashboard" && renderDashboardContent()}
           {activeTab === "Jobs" && renderJobs()}
           {activeTab === "Schedule" && renderSchedule()}

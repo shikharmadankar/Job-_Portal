@@ -8,14 +8,15 @@ import {
   LogOut,
   Briefcase,
   CalendarPlus,
-  X
+  X,
+  Menu
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const Sidebar = ({ activeTab, setActiveTab }) => {
+const Sidebar = ({ activeTab, setActiveTab, isOpen, onClose }) => {
   const navigate = useNavigate();
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -31,13 +32,21 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
   ];
 
   return (
-    <div className="w-64 bg-[#5c1688] text-white min-h-screen p-5 flex flex-col">
-      <h2 className="text-2xl font-extrabold mb-8 tracking-wide">Recruiter</h2>
+    <div className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#5c1688] text-white p-5 flex flex-col transform transition-transform duration-300 md:relative md:translate-x-0 ${isOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-extrabold tracking-wide">Recruiter</h2>
+        <button
+          onClick={onClose}
+          className="md:hidden p-1 rounded-lg hover:bg-purple-800 text-white"
+        >
+          <X size={20} />
+        </button>
+      </div>
       <ul className="space-y-3 flex-1">
         {menu.map((item, index) => (
           <li
             key={index}
-            onClick={() => setActiveTab(item.name)}
+            onClick={() => { setActiveTab(item.name); onClose(); }}
             className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition ${
               activeTab === item.name ? "bg-purple-800 shadow-inner text-white font-medium" : "hover:bg-purple-700 text-purple-200"
             }`}
@@ -58,16 +67,24 @@ const Sidebar = ({ activeTab, setActiveTab }) => {
   );
 };
 
-const Topbar = ({ user }) => {
+const Topbar = ({ user, onMenuClick }) => {
   return (
-    <div className="flex justify-between items-center mb-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">Welcome Back, {user?.fullname?.split(" ")[0] || "User"}</h1>
-        <p className="text-sm text-gray-500 mt-1">Here is what's happening today.</p>
+    <div className="flex justify-between items-center mb-8 gap-4">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuClick}
+          className="md:hidden p-2 rounded-xl bg-white border border-gray-100 shadow-sm text-gray-600 hover:text-purple-600 transition"
+        >
+          <Menu size={20} />
+        </button>
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800">Welcome Back, {user?.fullname?.split(" ")[0] || "User"}</h1>
+          <p className="text-xs md:text-sm text-gray-500 mt-1">Here is what's happening today.</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-5">
-        <div className="relative">
+        <div className="relative hidden sm:block">
              <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
              <input type="text" placeholder="Search..." className="pl-10 pr-4 py-2 border rounded-full text-sm outline-none focus:ring-2 focus:ring-purple-300 bg-white" />
         </div>
@@ -91,6 +108,7 @@ const Topbar = ({ user }) => {
 const RecruiterDashboard = () => {
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [user, setUser] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Applicant Fetching State
   const [realApplicants, setRealApplicants] = useState([]);
@@ -590,11 +608,19 @@ const RecruiterDashboard = () => {
   };
 
   return (
-    <div className="flex bg-gray-50 font-sans">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
+      {/* Mobile Sidebar Backdrop Overlay */}
+      {isSidebarOpen && (
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden"
+        />
+      )}
 
-      <div className="flex-1 min-h-screen p-8 lg:p-10 overflow-auto">
-        <Topbar user={user} />
+      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+      <div className="flex-1 min-h-screen p-4 md:p-8 lg:p-10 overflow-y-auto relative">
+        <Topbar user={user} onMenuClick={() => setIsSidebarOpen(true)} />
 
         {activeTab === "Dashboard" && renderDashboardStats()}
         {activeTab === "Post Job" && renderPostJob()}
@@ -609,5 +635,6 @@ const RecruiterDashboard = () => {
     </div>
   );
 };
+
 
 export default RecruiterDashboard;
