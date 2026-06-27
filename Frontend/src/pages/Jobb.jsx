@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, MapPin, Briefcase, Building, ChevronRight, Star, Filter } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { API_URL } from '../lib/api';
 
 // Utility for time ago
 const timeAgo = (dateString) => {

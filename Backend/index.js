@@ -21,7 +21,10 @@ app.use(cookieParser());
 
 // CORS Configuration
 const corsOptions = {
-  origin: ["http://localhost:5173"],
+  origin: [
+    "http://localhost:5173",
+    "https://job-portal-pearl-psi.vercel.app"
+  ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
@@ -33,11 +36,11 @@ const PORT = process.env.PORT || 8000;
  
 //api's
 
-app.use("/api/user", userRoute);
-app.use("/api/company", companyRoute);
-app.use("/api/job", jobRoute);
-app.use("/api/application", applicationRoute);
-app.use("/api/meeting", meetingRoute);
+app.use("/api/v1/user", userRoute);
+app.use("/api/v1/company", companyRoute);
+app.use("/api/v1/job", jobRoute);
+app.use("/api/v1/application", applicationRoute);
+app.use("/api/v1/meeting", meetingRoute);
 
 app.listen(PORT, () => {
   connectDB();

@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { API_URL } from "../lib/api";
 import { Mail, Lock, UserCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -28,7 +27,10 @@ function Login() {
     try {
       const res = await axios.post(
         `${API_URL}/user/login`,
-        formData
+        formData,
+        {
+          withCredentials: true
+        }
       );
 
       const user = res.data.user;

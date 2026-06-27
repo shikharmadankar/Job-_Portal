@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Home, BookOpen, Calendar, User, LogOut, Search, Bell, MapPin, Briefcase, Star, Clock, CheckCircle, XCircle, ChevronRight, Video, TrendingUp, FileText, Menu, X, Settings } from "lucide-react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import axios from "axios";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { API_URL } from "../lib/api";
 
 const Dashboard = () => {
   const navigate = useNavigate();

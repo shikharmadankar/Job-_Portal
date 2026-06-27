@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { API_URL } from "../lib/api";
 import {
   User,
   Mail,
